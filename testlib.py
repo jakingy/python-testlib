@@ -27,11 +27,12 @@ def isEoln(c):
     return c in EOLNS
 
 class validator:
-    def __init__(self, string=None):
+    def __init__(self, string=None, strict=True):
         self.idx = 0
         if string is None:
             string = sys.stdin.read()
         self.string = string
+        self.strict = strict
 
     def peekChar(self):
         if self.idx == len(self.string):
@@ -55,6 +56,10 @@ class validator:
     def unreadChar(self):
         self.idx -= 1
 
+    def skipBlanks(self):
+        while not self.isEOF() and isBlank(self.peekChar()):
+            self.idx += 1
+
     def readUntil(self, endF, regex=None):
         chars = []
         c = self.peekChar()
@@ -71,11 +76,12 @@ class validator:
             pattern = re.compile(regex)
             print(res)
             if not pattern.match(res):
-                raise Exception("Token does not match pattern")
+                raise Exception("Result does not match pattern")
         return res
 
-
     def readToken(self, regex=None):
+        if not self.strict:
+            self.skipBlanks()
         return self.readUntil(isBlank, regex)
 
     def readLine(self, regex=None):
@@ -84,8 +90,8 @@ class validator:
     def readString(self, regex=None):
         return self.readLine(regex)
 
-    def readWord(self):
-        return self.readToken()
+    def readWord(self, regex=None):
+        return self.readToken(regex)
         
     def readInt(self, L=None, R=None):
         return strictInt(self.readToken(), L, R)
@@ -117,8 +123,13 @@ class validator:
             raise Exception("Expected Eoln")
         self.idx += 1
 
+    def isEOF(self):
+        return self.idx == len(self.string)
+
     def readEOF(self):
-        if self.idx != len(self.string):
+        if not self.strict:
+            self.skipBlanks()            
+        if not self.isEOF():
             raise Exception("Expected EOF")
 
 if __name__ == '__main__':
