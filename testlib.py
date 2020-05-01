@@ -1,19 +1,21 @@
 import sys
 import re
+import string
 
 LF = '\n'
 CR = '\r'
 SPACE = ' '
 TAB = '\t'
-WHITESPACES = " \t\n\r"
-EOLNS = "\r\n"
+EOLNS = "\n\r"
+WHITESPACES = " \t" + EOLNS
+
+intregex = r"^-?[1-9]\d*|0$"
+intpattern = re.compile(intregex)
 
 def strictInt(x: str, lo=None, hi=None) -> int:
     res = int(x)
-    if x.startswith('-0'):
-        raise Exception("Integer cannot start with '-0'.")
-    if x.startswith('0') and len(x)>1: #001425 except 0
-        raise Exception("Integer cannot be preceeded with extra 0's")
+    if not intpattern.match(x):
+        raise Exception("Invalid integer")
     if lo is not None and res < lo:
         raise Exception("Integer less than lo bound")
     if hi is not None and res > hi:
@@ -74,7 +76,6 @@ class validator:
         res = ''.join(chars)
         if regex is not None:
             pattern = re.compile(regex)
-            print(res)
             if not pattern.match(res):
                 raise Exception("Result does not match pattern")
         return res
@@ -131,16 +132,3 @@ class validator:
             self.skipBlanks()            
         if not self.isEOF():
             raise Exception("Expected EOF")
-
-if __name__ == '__main__':
-    testInput = """5 15
-1FFRBBRFF0ULB11"""
-    v = validator(testInput)
-    N = v.readInt(1,1000)
-    v.readSpace()
-    M = v.readInt(2,1000000)
-    v.readEoln()
-    v.readLine("[FBLRU01]*0$")
-    v.readOptional('\r')
-    v.readOptional('\n')
-    v.readEOF()
